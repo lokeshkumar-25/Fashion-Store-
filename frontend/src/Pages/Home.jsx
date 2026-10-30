@@ -4,7 +4,10 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import ProductCard from "../Components/ProductCard";
 
-const API = "http://localhost:8080/api/products";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+const API = `${API_URL.replace(/\/$/, "")}/api/products`;
 
 const categories = [
   {
@@ -40,16 +43,26 @@ export default function Home() {
         const response = await axios.get(API);
         const data = response.data;
 
+        const productList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.content)
+          ? data.content
+          : [];
+
         if (active) {
-          setProducts(
-            Array.isArray(data) ? data : data.content ?? []
-          );
+          setProducts(productList);
+          setError("");
         }
       } catch (err) {
-        console.error(err);
-        if (active) setError("Unable to load products.");
+        console.error("Failed to load homepage products:", err);
+
+        if (active) {
+          setError("Unable to load products.");
+        }
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
@@ -62,7 +75,7 @@ export default function Home() {
 
   return (
     <main className="bg-white">
-      {/* Hero section */}
+      {/* Hero Section */}
       <section className="relative flex min-h-[480px] items-center bg-gray-900">
         <img
           src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600"
@@ -96,7 +109,9 @@ export default function Home() {
       {/* Categories */}
       <section className="mx-auto max-w-7xl px-5 py-16">
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold">Shop by Category</h2>
+          <h2 className="text-3xl font-bold">
+            Shop by Category
+          </h2>
           <p className="mt-2 text-gray-500">
             Find your perfect collection
           </p>
@@ -125,7 +140,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured products */}
+      {/* Featured Products */}
       <section className="bg-gray-50 py-16">
         <div className="mx-auto max-w-7xl px-5">
           <div className="mb-8 flex items-end justify-between gap-4">
@@ -153,14 +168,16 @@ export default function Home() {
               ))}
             </div>
           ) : error ? (
-            <p role="alert" className="text-red-600">{error}</p>
+            <p role="alert" className="text-red-600">
+              {error}
+            </p>
           ) : products.length === 0 ? (
             <p>No products available yet.</p>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.slice(0, 8).map((product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product.id || product._id}
                   product={product}
                 />
               ))}
@@ -169,7 +186,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Promotional section */}
+      {/* Promotional Section */}
       <section className="bg-gray-950 px-6 py-16 text-center text-white">
         <h2 className="text-3xl font-bold">
           Upgrade Your Wardrobe
